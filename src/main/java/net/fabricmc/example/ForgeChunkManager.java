@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import net.fabricmc.example.mixin.ForcedChunksSavedDataMixin;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -39,9 +40,6 @@ public class ForgeChunkManager {
 
     /**
      * Sets the forced chunk loading validation callback for the given mod. This allows for validating and removing no longer valid tickets on level load.
-     *
-     * @apiNote This method should be called from a {@link net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent} using one of the {@link
-     * net.minecraftforge.fml.event.lifecycle.ParallelDispatchEvent} enqueueWork methods.
      */
     public static void setForcedChunkLoadingCallback(String modId, LoadingValidationCallback callback) {
         if (FabricLoader.getInstance().isModLoaded(modId))
@@ -56,7 +54,7 @@ public class ForgeChunkManager {
     public static boolean hasForcedChunks(ServerLevel level) {
         ForcedChunksSavedData data = level.getDataStorage().get(ForcedChunksSavedData::load, "chunks");
         if (data == null) return false;
-        return !data.getChunks().isEmpty() || !data.getBlockForcedChunks().isEmpty() || !data.getEntityForcedChunks().isEmpty();
+        return !data.getChunks().isEmpty() || !getBlockForcedChunks(data).isEmpty() || !getEntityForcedChunks(data).isEmpty();
     }
 
     /**
@@ -66,7 +64,7 @@ public class ForgeChunkManager {
      * @param ticking {@code true} to make the chunk receive full chunk ticks even if there is no player nearby.
      */
     public static boolean forceChunk(ServerLevel level, String modId, BlockPos owner, int chunkX, int chunkZ, boolean add, boolean ticking) {
-        return forceChunk(level, modId, owner, chunkX, chunkZ, add, ticking, ticking ? BLOCK_TICKING : BLOCK, ForcedChunksSavedData::getBlockForcedChunks);
+        return forceChunk(level, modId, owner, chunkX, chunkZ, add, ticking, ticking ? BLOCK_TICKING : BLOCK, ForgeChunkManager::getBlockForcedChunks);
     }
 
     /**
@@ -86,7 +84,7 @@ public class ForgeChunkManager {
      * @param ticking {@code true} to make the chunk receive full chunk ticks even if there is no player nearby.
      */
     public static boolean forceChunk(ServerLevel level, String modId, UUID owner, int chunkX, int chunkZ, boolean add, boolean ticking) {
-        return forceChunk(level, modId, owner, chunkX, chunkZ, add, ticking, ticking ? ENTITY_TICKING : ENTITY, ForcedChunksSavedData::getEntityForcedChunks);
+        return forceChunk(level, modId, owner, chunkX, chunkZ, add, ticking, ticking ? ENTITY_TICKING : ENTITY, ForgeChunkManager::getEntityForcedChunks);
     }
 
     /**
@@ -132,9 +130,9 @@ public class ForgeChunkManager {
     private static <T extends Comparable<? super T>> void forceChunk(ServerLevel level, ChunkPos pos, TicketType<TicketOwner<T>> type, TicketOwner<T> owner, boolean add,
                                                                      boolean ticking) {
         if (add)
-            level.getChunkSource().addRegionTicket(type, pos, 2, owner, ticking);
+            level.getChunkSource().distanceManager.addRegionTicket(type, pos, 2, owner, ticking);
         else
-            level.getChunkSource().removeRegionTicket(type, pos, 2, owner, ticking);
+            level.getChunkSource().distanceManager.removeRegionTicket(type, pos, 2, owner, ticking);
     }
 
     /**
@@ -146,8 +144,8 @@ public class ForgeChunkManager {
     public static void reinstatePersistentChunks(ServerLevel level, ForcedChunksSavedData saveData) {
         if (!callbacks.isEmpty()) {
             //If we have any callbacks, gather all owned tickets by modid for both blocks and entities
-            Map<String, Map<BlockPos, Pair<LongSet, LongSet>>> blockTickets = gatherTicketsByModId(saveData.getBlockForcedChunks());
-            Map<String, Map<UUID, Pair<LongSet, LongSet>>> entityTickets = gatherTicketsByModId(saveData.getEntityForcedChunks());
+            Map<String, Map<BlockPos, Pair<LongSet, LongSet>>> blockTickets = gatherTicketsByModId(getBlockForcedChunks(saveData));
+            Map<String, Map<UUID, Pair<LongSet, LongSet>>> entityTickets = gatherTicketsByModId(getEntityForcedChunks(saveData));
             //Fire the callbacks allowing them to remove any tickets they don't want anymore
             for (Map.Entry<String, LoadingValidationCallback> entry : callbacks.entrySet()) {
                 String modId = entry.getKey();
@@ -161,10 +159,10 @@ public class ForgeChunkManager {
             }
         }
         //Reinstate the chunks that we want to load
-        reinstatePersistentChunks(level, BLOCK, saveData.getBlockForcedChunks().chunks, false);
-        reinstatePersistentChunks(level, BLOCK_TICKING, saveData.getBlockForcedChunks().tickingChunks, true);
-        reinstatePersistentChunks(level, ENTITY, saveData.getEntityForcedChunks().chunks, false);
-        reinstatePersistentChunks(level, ENTITY_TICKING, saveData.getEntityForcedChunks().tickingChunks, true);
+        reinstatePersistentChunks(level, BLOCK, getBlockForcedChunks(saveData).chunks, false);
+        reinstatePersistentChunks(level, BLOCK_TICKING, getBlockForcedChunks(saveData).tickingChunks, true);
+        reinstatePersistentChunks(level, ENTITY, getEntityForcedChunks(saveData).chunks, false);
+        reinstatePersistentChunks(level, ENTITY_TICKING, getEntityForcedChunks(saveData).tickingChunks, true);
     }
 
     /**
@@ -183,8 +181,8 @@ public class ForgeChunkManager {
     private static <T extends Comparable<? super T>> void gatherTicketsByModId(Map<TicketOwner<T>, LongSet> tickets, Function<Pair<LongSet, LongSet>, LongSet> typeGetter,
                                                                                Map<String, Map<T, Pair<LongSet, LongSet>>> modSortedOwnedChunks) {
         for (Map.Entry<TicketOwner<T>, LongSet> entry : tickets.entrySet()) {
-            Pair<LongSet, LongSet> pair = modSortedOwnedChunks.computeIfAbsent(entry.getKey().modId, modId -> new HashMap<>())
-                    .computeIfAbsent(entry.getKey().owner, owner -> new Pair<>(new LongOpenHashSet(), new LongOpenHashSet()));
+            Pair<LongSet, LongSet> pair = modSortedOwnedChunks.computeIfAbsent(entry.getKey().modId(), modId -> new HashMap<>())
+                    .computeIfAbsent(entry.getKey().owner(), owner -> new Pair<>(new LongOpenHashSet(), new LongOpenHashSet()));
             typeGetter.apply(pair).addAll(entry.getValue());
         }
     }
@@ -233,7 +231,7 @@ public class ForgeChunkManager {
     private static <T extends Comparable<? super T>> void writeForcedChunkOwners(Map<String, Long2ObjectMap<CompoundTag>> forcedEntries,
                                                                                  Map<TicketOwner<T>, LongSet> forcedChunks, String listKey, int listType, BiConsumer<T, ListTag> ownerWriter) {
         for (Map.Entry<TicketOwner<T>, LongSet> entry : forcedChunks.entrySet()) {
-            Long2ObjectMap<CompoundTag> modForced = forcedEntries.computeIfAbsent(entry.getKey().modId, modId -> new Long2ObjectOpenHashMap<>());
+            Long2ObjectMap<CompoundTag> modForced = forcedEntries.computeIfAbsent(entry.getKey().modId(), modId -> new Long2ObjectOpenHashMap<>());
             for (long chunk : entry.getValue()) {
                 CompoundTag modEntry = modForced.computeIfAbsent(chunk, chunkPos -> {
                     CompoundTag baseEntry = new CompoundTag();
@@ -241,7 +239,7 @@ public class ForgeChunkManager {
                     return baseEntry;
                 });
                 ListTag ownerList = modEntry.getList(listKey, listType);
-                ownerWriter.accept(entry.getKey().owner, ownerList);
+                ownerWriter.accept(entry.getKey().owner(), ownerList);
                 //Note: As getList returns a new list in the case the data is of the wrong type,
                 // we need to mimic was vanilla does in various places and put our list back in
                 // the CompoundNBT regardless.
@@ -305,5 +303,13 @@ public class ForgeChunkManager {
          * @param ticketHelper Ticket helper to remove any invalid tickets.
          */
         void validateTickets(ServerLevel level, TicketHelper ticketHelper);
+    }
+
+    public static TicketTracker<BlockPos> getBlockForcedChunks(ForcedChunksSavedData savedData) {
+        return ((AdditionalForcedChunksSavedData) savedData).getBlockForcedChunks();
+    }
+    
+    public static TicketTracker<UUID> getEntityForcedChunks(ForcedChunksSavedData savedData) {
+        return ((AdditionalForcedChunksSavedData) savedData).getEntityForcedChunks();
     }
 }

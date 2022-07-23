@@ -54,7 +54,7 @@ public class TicketHelper {
      * @param owner Block that was responsible.
      */
     public void removeAllTickets(BlockPos owner) {
-        removeAllTickets(saveData.getBlockForcedChunks(), owner);
+        removeAllTickets(ForgeChunkManager.getBlockForcedChunks(saveData), owner);
     }
 
     /**
@@ -63,7 +63,7 @@ public class TicketHelper {
      * @param owner Entity (UUID) that was responsible.
      */
     public void removeAllTickets(UUID owner) {
-        removeAllTickets(saveData.getEntityForcedChunks(), owner);
+        removeAllTickets(ForgeChunkManager.getEntityForcedChunks(saveData), owner);
     }
 
     /**
@@ -86,7 +86,7 @@ public class TicketHelper {
      * @param ticking Whether or not the ticket to remove represents a ticking set of tickets or not.
      */
     public void removeTicket(BlockPos owner, long chunk, boolean ticking) {
-        removeTicket(saveData.getBlockForcedChunks(), owner, chunk, ticking);
+        removeTicket(ForgeChunkManager.getBlockForcedChunks(saveData), owner, chunk, ticking);
     }
 
     /**
@@ -97,7 +97,7 @@ public class TicketHelper {
      * @param ticking Whether or not the ticket to remove represents a ticking set of tickets or not.
      */
     public void removeTicket(UUID owner, long chunk, boolean ticking) {
-        removeTicket(saveData.getEntityForcedChunks(), owner, chunk, ticking);
+        removeTicket(ForgeChunkManager.getEntityForcedChunks(saveData), owner, chunk, ticking);
     }
 
     private <T extends Comparable<? super T>> void removeTicket(TicketTracker<T> tickets, T owner, long chunk, boolean ticking) {

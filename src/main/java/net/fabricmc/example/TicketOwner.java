@@ -9,14 +9,7 @@ import java.util.Objects;
 /**
  * Helper class to keep track of a ticket owner by modid and owner object
  */
-public class TicketOwner<T extends Comparable<? super T>> implements Comparable<TicketOwner<T>> {
-    public final String modId;
-    public final T owner;
-
-    public TicketOwner(String modId, T owner) {
-        this.modId = modId;
-        this.owner = owner;
-    }
+public record TicketOwner<T extends Comparable<? super T>>(String modId, T owner) implements Comparable<TicketOwner<T>> {
 
     @Override
     public int compareTo(TicketOwner<T> other) {
@@ -30,10 +23,5 @@ public class TicketOwner<T extends Comparable<? super T>> implements Comparable<
         if (o == null || getClass() != o.getClass()) return false;
         TicketOwner<?> that = (TicketOwner<?>) o;
         return Objects.equals(modId, that.modId) && Objects.equals(owner, that.owner);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(modId, owner);
     }
 }

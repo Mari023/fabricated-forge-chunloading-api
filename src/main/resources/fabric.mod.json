@@ -2,7 +2,6 @@
   "schemaVersion": 1,
   "id": "fabricated-forge-chunkloading-api",
   "version": "${version}",
-
   "name": "Fabricated Forge Chunkloading API",
   "description": "the chunk loading api from Forge, but for fabric",
   "authors": [
@@ -12,10 +11,8 @@
     "homepage": "https://fabricmc.net/",
     "sources": "https://github.com/FabricMC/fabric-example-mod"
   },
-
   "license": "LGPL-2.1-only",
   "icon": "assets/modid/icon.png",
-
   "environment": "*",
   "entrypoints": {
     "main": [
@@ -25,7 +22,7 @@
   "mixins": [
     "modid.mixins.json"
   ],
-
+  "accessWidener": "modid.accesswidener",
   "depends": {
     "minecraft": "~1.19"
   }
