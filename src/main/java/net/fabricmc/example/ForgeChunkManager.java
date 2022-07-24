@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.fabricmc.example.mixin.ForcedChunksSavedDataMixin;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -130,9 +129,9 @@ public class ForgeChunkManager {
     private static <T extends Comparable<? super T>> void forceChunk(ServerLevel level, ChunkPos pos, TicketType<TicketOwner<T>> type, TicketOwner<T> owner, boolean add,
                                                                      boolean ticking) {
         if (add)
-            level.getChunkSource().distanceManager.addRegionTicket(type, pos, 2, owner, ticking);
+            ((AdditionalDistanceManager) level.getChunkSource().distanceManager).addRegionTicket(type, pos, 2, owner, ticking);
         else
-            level.getChunkSource().distanceManager.removeRegionTicket(type, pos, 2, owner, ticking);
+            ((AdditionalDistanceManager) level.getChunkSource().distanceManager).removeRegionTicket(type, pos, 2, owner, ticking);
     }
 
     /**
@@ -308,7 +307,7 @@ public class ForgeChunkManager {
     public static TicketTracker<BlockPos> getBlockForcedChunks(ForcedChunksSavedData savedData) {
         return ((AdditionalForcedChunksSavedData) savedData).getBlockForcedChunks();
     }
-    
+
     public static TicketTracker<UUID> getEntityForcedChunks(ForcedChunksSavedData savedData) {
         return ((AdditionalForcedChunksSavedData) savedData).getEntityForcedChunks();
     }
