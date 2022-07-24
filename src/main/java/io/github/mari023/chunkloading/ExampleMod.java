@@ -1,4 +1,4 @@
-package net.fabricmc.example;
+package io.github.mari023.chunkloading;
 
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package net.fabricmc.example;
+package io.github.mari023.chunkloading;
 
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;

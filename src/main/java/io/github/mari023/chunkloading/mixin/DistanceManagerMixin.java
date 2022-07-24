@@ -1,7 +1,7 @@
-package net.fabricmc.example.mixin;
+package io.github.mari023.chunkloading.mixin;
 
+import io.github.mari023.chunkloading.AdditionalDistanceManager;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import net.fabricmc.example.AdditionalDistanceManager;
 import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.server.level.TicketType;

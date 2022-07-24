@@ -1,11 +1,11 @@
-package net.fabricmc.example.mixin;
+package io.github.mari023.chunkloading.mixin;
 
-import net.fabricmc.example.AdditionalForcedChunksSavedData;
-import net.fabricmc.example.ForgeChunkManager;
-import net.fabricmc.example.TicketTracker;
+import io.github.mari023.chunkloading.TicketTracker;
+import io.github.mari023.chunkloading.AdditionalForcedChunksSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ForcedChunksSavedData;
+import io.github.mari023.chunkloading.ForgeChunkManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
