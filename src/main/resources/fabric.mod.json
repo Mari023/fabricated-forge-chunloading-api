@@ -7,8 +7,7 @@
   "authors": [
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "sources": "https://github.com/Mari023/fabricated-forge-chunloading-api"
   },
   "license": "LGPL-2.1-only",
   "icon": "assets/fabricated-forge-chunkloading-api/icon.png",
