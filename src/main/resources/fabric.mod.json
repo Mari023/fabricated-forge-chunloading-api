@@ -13,11 +13,6 @@
   "license": "LGPL-2.1-only",
   "icon": "assets/fabricated-forge-chunkloading-api/icon.png",
   "environment": "*",
-  "entrypoints": {
-    "main": [
-      "io.github.mari023.chunkloading.ExampleMod"
-    ]
-  },
   "mixins": [
     "fabricated-forge-chunkloading-api.mixins.json"
   ],
